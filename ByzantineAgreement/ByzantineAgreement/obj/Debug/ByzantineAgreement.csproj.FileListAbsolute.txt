@@ -1,1 +1,8 @@
 C:\Users\Megan\Documents\Visual Studio 2015\Projects\byzantine-agreement\ByzantineAgreement\ByzantineAgreement\bin\Debug\ByzantineAgreement.exe.config
+C:\Users\Megan\Documents\Visual Studio 2015\Projects\byzantine-agreement\ByzantineAgreement\ByzantineAgreement\bin\Debug\ByzantineAgreement.exe
+C:\Users\Megan\Documents\Visual Studio 2015\Projects\byzantine-agreement\ByzantineAgreement\ByzantineAgreement\bin\Debug\ByzantineAgreement.pdb
+C:\Users\Megan\Documents\Visual Studio 2015\Projects\byzantine-agreement\ByzantineAgreement\ByzantineAgreement\bin\Debug\System.Threading.Tasks.Dataflow.dll
+C:\Users\Megan\Documents\Visual Studio 2015\Projects\byzantine-agreement\ByzantineAgreement\ByzantineAgreement\bin\Debug\System.Threading.Tasks.Dataflow.xml
+C:\Users\Megan\Documents\Visual Studio 2015\Projects\byzantine-agreement\ByzantineAgreement\ByzantineAgreement\obj\Debug\ByzantineAgreement.csprojResolveAssemblyReference.cache
+C:\Users\Megan\Documents\Visual Studio 2015\Projects\byzantine-agreement\ByzantineAgreement\ByzantineAgreement\obj\Debug\ByzantineAgreement.exe
+C:\Users\Megan\Documents\Visual Studio 2015\Projects\byzantine-agreement\ByzantineAgreement\ByzantineAgreement\obj\Debug\ByzantineAgreement.pdb

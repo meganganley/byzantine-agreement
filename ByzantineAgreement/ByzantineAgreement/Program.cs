@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 
 namespace ByzantineAgreement
@@ -18,6 +21,12 @@ namespace ByzantineAgreement
             {
                 nodes.Add(NodeFromInput(Console.ReadLine()));
             }
+
+
+
+            MainSecond();
+
+            Console.ReadLine();
 
         }
 
@@ -53,27 +62,108 @@ namespace ByzantineAgreement
 
             return node;
         }
-    }
 
-    public class FaultyScript
-    {
-
-
-    }
-
-    public class ByzNode
-    {
-        public ByzNode() { }
-
-        public ByzNode(int index, int initValue, bool faulty)
+        public static int tid()
         {
-            Index = index;
-            InitValue = initValue;
-            Faulty = faulty;
+            return System.Threading.Thread.CurrentThread.ManagedThreadId;
         }
 
-        public int Index { get; set; }
-        public int InitValue { get; set; }
-        public bool Faulty { get; set; }
+
+
+        public static ActionBlock<Message>[] Byz;
+
+        public static int N;
+        public static TaskCompletionSource<bool> Completion;
+        static int CompletionCount;
+
+
+        public static void MainSecond()
+        {
+            Console.WriteLine("[{0}] main start", tid());
+
+            CompletionCount = N = 4;
+            Completion = new TaskCompletionSource<bool>();
+            Byz = new ActionBlock<Message>[N];
+
+            for (int i = 0; i < N; i++)
+            {
+                var bp = new ByzProcess(i + 1, (i + 1) * 10);
+                Byz[i] = new ActionBlock<Message>((Action<Message>)bp.ByzBody);
+            }
+
+            Console.WriteLine("[{0}] main body", tid());
+
+            for (int i = 0; i < N; i++)
+            {
+                Byz[i].Post(new Message(0, 0));
+            }
+
+            Console.WriteLine("[{0}] main waiting", tid());
+            Completion.Task.Wait();
+            Console.WriteLine("[{0}] main end", tid());
+        }
+
+        public class FaultyScript
+        {
+
+
+        }
+
+        public class ByzNode
+        {
+            public ByzNode() { }
+
+            public ByzNode(int index, int initValue, bool faulty)
+            {
+                Index = index;
+                InitValue = initValue;
+                Faulty = faulty;
+            }
+
+            public int Index { get; set; }
+            public int InitValue { get; set; }
+            public bool Faulty { get; set; }
+        }
+
+        public class Message
+        {
+            public Message(int from, int value) { From = from; Value = value; }
+            public int From { get; private set; }
+            public int Value { get; private set; }
+        }
+
+        public class ByzProcess
+        {
+            public ByzProcess(int index, int init)
+            {
+                Index = index;
+                Init = init;
+            }
+
+            public int Index { get; private set; }
+            public int Init { get; private set; }
+
+            int rcount;
+
+            public void ByzBody(Message msg)
+            {
+                   Console.WriteLine("[{0}] {1} <- ({2}, {3})", tid(), Index, msg.From, msg.Value);
+
+                if (msg.From == 0)
+                {
+                             for (var i = 0; i < N; i++) Byz[i].Post(new Message(Index, Init));
+
+                }
+                else
+                {
+                    rcount += 1;
+                             if (rcount == N && Interlocked.Decrement(ref CompletionCount) == 0)
+                                Completion.SetResult(true);
+                }
+            }
+        }
     }
+
+    
+   
 }
