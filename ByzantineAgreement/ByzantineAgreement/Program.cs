@@ -11,10 +11,10 @@ namespace ByzantineAgreement
     class Program
     {
         private static int _n;
-        
+
         public static ActionBlock<Message>[] Byz;
         static int _completionCount;
-        
+
         public static TaskCompletionSource<bool> Completion;
 
 
@@ -25,30 +25,38 @@ namespace ByzantineAgreement
             int defaultValue = Convert.ToInt32(temp[1]);
 
             List<ByzNode> nodes = new List<ByzNode>();
+            Byz = new ActionBlock<Message>[_n];
+
+
+            Completion = new TaskCompletionSource<bool>();
+            _completionCount = _n;
 
             for (int i = 0; i < _n; i++)
             {
-                var n = NodeFromInput(Console.ReadLine());
-                nodes.Add(n);
+                var node = NodeFromInput(Console.ReadLine());
+                nodes.Add(node);
 
-                Console.WriteLine(n);
-                
-                // todo: rename 
-                Byz[i] = new ActionBlock<Message>((Action<Message>)n.ByzBody);
+                Console.WriteLine(node);
+
+                // todo: i / node.index??
+                Byz[node.Index - 1] = new ActionBlock<Message>((Action<Message>)node.ByzBody);
             }
 
 
             /* SETTING UP THE CRAZY TDF STUFF */
 
-            for (int i = 0; i < _n; i++)
+            int maxRounds = (_n - 1)/3 + 1;
+
+            for (int i = 0 ; i < maxRounds; i++)
             {
-                Byz[i].Post(new Message(0, 0));
+                for (int j = 0; j < _n; j++)
+                {
+                    Byz[j].Post(new Message(0, 0));
+                }
+
+                Completion.Task.Wait();
             }
-
-            //  MainSecond();
-
-            Completion.Task.Wait();
-
+            
             Console.ReadLine();
 
         }
@@ -57,34 +65,6 @@ namespace ByzantineAgreement
         public static int tid()
         {
             return System.Threading.Thread.CurrentThread.ManagedThreadId;
-        }
-
-        
-        // todo : get rid of this 
-        public static void MainSecond()
-        {
-            Console.WriteLine("[{0}] main start", tid());
-
-            _completionCount = _n = 4;
-            Completion = new TaskCompletionSource<bool>();
-            Byz = new ActionBlock<Message>[_n];
-
-            for (int i = 0; i < _n; i++)
-            {
-                var bp = new ByzProcess(i + 1, (i + 1) * 10);
-                Byz[i] = new ActionBlock<Message>((Action<Message>)bp.ByzBody);
-            }
-
-            Console.WriteLine("[{0}] main body", tid());
-
-            for (int i = 0; i < _n; i++)
-            {
-                Byz[i].Post(new Message(0, 0));
-            }
-
-            Console.WriteLine("[{0}] main waiting", tid());
-            Completion.Task.Wait();
-            Console.WriteLine("[{0}] main end", tid());
         }
 
 
@@ -98,23 +78,38 @@ namespace ByzantineAgreement
                 InitValue = initValue;
                 Faulty = faulty;
                 MessagesReceived = 0;
+                RoundNumber = 1;
             }
-
-            public int  n = 4;
             public int Index { get; set; }
             public int InitValue { get; set; }
             public bool Faulty { get; set; }
             public int[,] FaultyMessages { get; set; }
-            public int MessagesReceived { get; set; }
+
+            public int MessagesReceived;
+            public int RoundNumber;
 
             public void ByzBody(Message msg)
             {
+
+                Console.WriteLine("[{0}] {1} <- ({2}, {3})", tid(), Index, msg.From, msg.Value);
+
                 // indicates start of new round
                 if (msg.From == 0)
                 {
+                    RoundNumber++;
                     for (var i = 0; i < _n; i++)
                     {
-                        Byz[i].Post(new Message(Index, InitValue));
+                        // send messages for corresponding round 
+
+                        if (Faulty)
+                        {
+                            Byz[i].Post(new Message(Index, FaultyMessages[0, i]));
+                        }
+                        else
+                        {
+                            Byz[i].Post(new Message(Index, InitValue));
+                        }
+
                     }
 
                 }
@@ -139,7 +134,7 @@ namespace ByzantineAgreement
                     string s = Index + " is faulty \n";
                     for (int i = 0; i < FaultyMessages.GetLength(0); i++)
                     {
-                        for (int j = 0; j < n; j++)
+                        for (int j = 0; j < _n; j++)
                         {
                             s += FaultyMessages[i, j] + " ";
                         }
@@ -158,38 +153,7 @@ namespace ByzantineAgreement
             public int Value { get; private set; }
         }
 
-        // todo: get rid of this 
-        public class ByzProcess
-        {
-            public ByzProcess(int index, int init)
-            {
-                Index = index;
-                Init = init;
-            }
-
-            public int Index { get; private set; }
-            public int Init { get; private set; }
-
-            int rcount;
-
-            public void ByzBody(Message msg)
-            {
-                Console.WriteLine("[{0}] {1} <- ({2}, {3})", tid(), Index, msg.From, msg.Value);
-                // start indicator
-                if (msg.From == 0)
-                {
-                    for (var i = 0; i < _n; i++) Byz[i].Post(new Message(Index, Init));
-
-                }
-                else
-                {
-                    rcount += 1;
-                    if (rcount == _n && Interlocked.Decrement(ref _completionCount) == 0)
-                        Completion.SetResult(true);
-                }
-            }
-        }
-
+        
         /* HELPER METHODS */
         private static ByzNode NodeFromInput(string s)
         {
