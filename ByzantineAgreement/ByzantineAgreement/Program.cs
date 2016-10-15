@@ -29,8 +29,8 @@ namespace ByzantineAgreement
             Byz = new ActionBlock<Message>[_n];
 
 
-            Completion = new TaskCompletionSource<bool>();
-            _completionCount = _n;
+       //     Completion = new TaskCompletionSource<bool>();
+      //      _completionCount = _n;
 
             for (int i = 0; i < _n; i++)
             {
@@ -50,14 +50,18 @@ namespace ByzantineAgreement
 
             for (int i = 0 ; i < maxRounds; i++)
             {
+                _completionCount = _n;
+                Completion = new TaskCompletionSource<bool>();
+
                 for (int j = 0; j < _n; j++)
                 {
-                    Byz[j].Post(new Message(0, 0));
+                    Byz[j].Post(new Message("0", "0"));
                 }
 
                 Completion.Task.Wait();
             }
             
+            Console.WriteLine("Finished rounds");
             Console.ReadLine();
 
         }
@@ -74,12 +78,9 @@ namespace ByzantineAgreement
             public ByzNode()
             {
                 MessagesReceived = 0;
-                RoundNumber = 1;
-
-                Root = new TreeNode(new Message(0, _defaultValue));
-              
+                RoundNumber = 0;
             }
-
+            /* 
             public ByzNode(int index, int initValue, bool faulty)
             {
                 Index = index;
@@ -88,13 +89,13 @@ namespace ByzantineAgreement
                 MessagesReceived = 0;
                 RoundNumber = 1;
 
-                Root = new TreeNode(new Message(0, _defaultValue));
+                Root = new TreeNode(new Message(Index, InitValue));
                 
-            }
+            }*/
             public int Index { get; set; }
-            public int InitValue { get; set; }
+            public string InitValue { get; set; }
             public bool Faulty { get; set; }
-            public int[,] FaultyMessages { get; set; }
+            public string[,] FaultyMessages { get; set; }
             public TreeNode Root { get; set; }
 
             public int MessagesReceived;
@@ -103,43 +104,50 @@ namespace ByzantineAgreement
             public void ByzBody(Message msg)
             {
 
-                Console.WriteLine("[{0}] {1} <- ({2}, {3})", tid(), Index, msg.Node, msg.Value);
+                Console.WriteLine("[{0}] {1} <- ({2}, {3})", tid(), Index, msg.NodePath, msg.Value);
 
                 // indicates start of new round
-                if (msg.Node == 0)
+                if (msg.NodePath.Equals("0"))
                 {
+
                     RoundNumber++;
                     MessagesReceived = 0;
+
+                    Console.WriteLine("Node " + Index + " is starting round " + RoundNumber);
+
+
+                    TreeNode p = Root;
+                    List<TreeNode> current = new List<TreeNode> { Root };
+
+                    // should find last completed level 
+                    while (p.Children.Count > 0)
+                    {
+                        current = p.Children;
+                        p = p.Children.ElementAt(0);
+                    }
+
+                    if (current.Count > 1)
+                    {
+                        current.Sort();
+                    }
+                    
 
 
                     for (var i = 0; i < _n; i++)
                     {
-                        TreeNode p = Root;
-                        TreeNode c = Root;
-
-                        // should find last completed level 
-                        while (p.Children.Count > 0)
-                        {
-                            c = p;
-                            p = p.Children.ElementAt(0);
-                        }
-
-
-                        // c.Children is messages to send 
-                        // send messages for corresponding round SOMEHOW 
-
                         if (Faulty)
                         {
-                            Byz[i].Post(new Message(Index, FaultyMessages[0, i]));
+                            Byz[i].Post(new Message(""+Index, FaultyMessages[RoundNumber - 1, i]));
                         }
                         else
                         {
-                            foreach (TreeNode t in c.Children)
+                            string value = "";
+                            foreach (TreeNode t in current)
                             {
-                                // value append 
-                                // index append 
+                                value += t.Data.Value;
+                                
                             }
-                            Byz[i].Post(new Message(Index, InitValue));
+                            Byz[i].Post(new Message(""+Index, value));
                         }
 
                     }
@@ -150,28 +158,41 @@ namespace ByzantineAgreement
                 {
                     MessagesReceived += 1;
 
-                    int index;
-                    TreeNode p = Root;
-                    TreeNode c;
+                    string index;
 
 
-                    for ( int i = 0 ; i < GetNumberDigits(msg.Node); i ++)
+                    TreeNode p = Root.Children.Find(x => x.Data.NodePath.Equals(msg.NodePath.Substring(0,1)));
+                    
+                    //special case for first round
+                    if (p == null)
                     {
-                        index = GetDigit(msg.Node, i);
-
-
-
-                        c = p.Children.Find( x => x.Data.Node == index);
-
-                        // node doesnt exist yet, create
-                        if ( c == null)
-                        {
-                            p.Children.Add(new TreeNode(new Message(msg.Node, msg.Value)));
-                            break;
-                        }
-
-                        c = p;
+                        Root.Children.Add(new TreeNode(new Message(msg.NodePath + "", msg.Value)));
                     }
+                    else
+                    {
+                        TreeNode c;
+
+
+                        for (int i = 1; i < msg.NodePath.Length; i++)
+                        {
+                            index = msg.NodePath.Substring(0, i + 1);
+
+
+                            c = p.Children.Find(x => x.Data.NodePath.Equals(index));
+
+                            // node doesnt exist yet, create
+                            if (c == null)
+                            {
+                                p.Children.Add(new TreeNode(new Message(msg.NodePath + "", msg.Value)));
+                                break;
+                            }
+
+                            c = p;
+                        }
+                    }
+
+
+                   
 
              // add children at level round number 
                 //    Root.Children.Add(new Message());
@@ -208,21 +229,21 @@ namespace ByzantineAgreement
 
         public class Message
         {
-            public Message(int node, int value) { Node = node; Value = value; }
+            public Message(string nodePath, string value) { NodePath = nodePath; Value = value; }
 
             // Node is the full path of information 
-            public int Node { get; private set; }
-            public int Value { get; private set; }
+            public string NodePath { get; private set; }
+            public string Value { get; private set; }
 
             public override string ToString()
             {
-                return Node + " : " + Value;
+                return NodePath + " : " + Value;
             }
         }
 
-        private static int GetDigit(int num, int digit)
+        private static int GetNDigits(int num, int digit)
         {
-            return Convert.ToInt32(num.ToString().Substring(digit, digit + 1));
+            return Convert.ToInt32(num.ToString().Substring(0, digit + 1));
         }
 
         private static int GetNumberDigits(int num)
@@ -243,33 +264,34 @@ namespace ByzantineAgreement
             {
                 node.Index = num;
             }
-            if (Int32.TryParse(temp[1], out num))
-            {
-                node.InitValue = num;
-            }
+
+            node.InitValue = temp[1];
+
             if (temp[2] == "1")
             {
                 node.Faulty = true;
                 node.FaultyMessages = FaultyScriptFromInput(temp.Skip(3));
             }
+            else
+            {
+                node.Faulty = false;
+            }
 
+
+            node.Root = new TreeNode(new Message("" + node.Index, node.InitValue));
 
             return node;
         }
 
-        private static int[,] FaultyScriptFromInput(IEnumerable<string> s)
+        private static string[,] FaultyScriptFromInput(IEnumerable<string> s)
         {
-            int[,] ret = new int[s.Count() / _n, _n];
-            int num;
-
+            string[,] ret = new string[s.Count() / _n, _n];
+           
             for (int i = 0; i < ret.GetLength(0); i++)
             {
                 for (int j = 0; j < _n; j++)
                 {
-                    if (Int32.TryParse(s.ElementAt(i * _n + j), out num))
-                    {
-                        ret[i, j] = num;
-                    }
+                    ret[i, j] = s.ElementAt(i * _n + j);
                 }
             }
             return ret;
@@ -280,7 +302,7 @@ namespace ByzantineAgreement
             return 0; 
         }
 
-        public class TreeNode
+        public class TreeNode : IComparable
         {
             //public List<TreeNode> _childrenAtLevel;
             public TreeNode Parent { get; set; }
@@ -308,6 +330,18 @@ namespace ByzantineAgreement
             public override string ToString()
             {
                 return Data.ToString();
+            }
+
+            public int CompareTo(object obj)
+            {
+                if (obj == null) return 1;
+
+                TreeNode other = obj as TreeNode;
+                if (other != null)
+                    // todo fix
+                    return Data.NodePath.CompareTo(other.Data.NodePath);
+                else
+                    throw new ArgumentException("Object is not a Temperature");
             }
         }
 
