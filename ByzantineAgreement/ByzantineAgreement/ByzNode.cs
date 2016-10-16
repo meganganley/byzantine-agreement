@@ -109,9 +109,9 @@ namespace ByzantineAgreement
 
 
                     c = p.Children.First(x => x.Index == node);
-                    p = c; 
+                    p = c;
 
-
+                   
                     p.Children.Add(new TreeNode(n.Value, msg.Sender));
                     p.Children.Sort();
                 }

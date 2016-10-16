@@ -1,5 +1,6 @@
 ﻿#region
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -16,13 +17,13 @@ namespace ByzantineAgreement
         {
             _list = new List<MessageNode>();
 
-            TraverseTree(root, new List<int>());
+            TraverseTree(root, new List<int>(), root.Index);
 
 
             return _list;
         }
 
-        private void TraverseTree(TreeNode node, IEnumerable<int> path)
+        private void TraverseTree(TreeNode node, IEnumerable<int> path, int rootIndex)
         {
             if (!node.Children.Any())
             {
@@ -32,7 +33,10 @@ namespace ByzantineAgreement
 
             foreach (var child in node.Children)
             {
-                TraverseTree(child, path.Concat(new List<int> { child.Index }));
+                if (child.Index != rootIndex)
+                {
+                    TraverseTree(child, path.Concat(new List<int> {child.Index}), rootIndex);
+                }
             }
         }
 
@@ -152,12 +156,16 @@ namespace ByzantineAgreement
                 foreach (char c in value)
                 {
                     List<int> path = new List<int>();
+                    if (count > Program.N)
+                    {
+                        count = 1;
+                    }
 
                     if (count == index)
                     {
                         count += 1;
                     }
-
+                    
                     //     path.Add(sender);
                     path.Add(count);
                     m.Add(new MessageNode(path, c - '0'));

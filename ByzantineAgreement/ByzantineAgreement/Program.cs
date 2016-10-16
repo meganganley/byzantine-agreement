@@ -67,7 +67,7 @@ namespace ByzantineAgreement
         }
 
 
-        /* HELPER METHODS */
+        /* INPUT HELPER METHODS */
 
         private static ByzNode NodeFromInput(string s)
         {
