@@ -1,14 +1,15 @@
-﻿using System;
-using System.Collections;
+﻿#region
+
 using System.Collections.Generic;
 using System.Linq;
 
+#endregion
+
 namespace ByzantineAgreement
 {
-    public class TreeTraverser
+    public class Helper
     {
         private List<MessageNode> _list;
-        private string _output;
         private List<string> levels;
 
         public List<MessageNode> GenerateMessages(TreeNode root)
@@ -37,9 +38,6 @@ namespace ByzantineAgreement
 
         public List<string> GenerateOutput(TreeNode root)
         {
-            _output = "";
-
-
             BottomUpEvaluation(root);
             Consensus(root);
 
@@ -52,14 +50,10 @@ namespace ByzantineAgreement
             return levels;
         }
 
-
-
-
         public void BFS(TreeNode root)
         {
-           
             Queue<TreeNode> q = new Queue<TreeNode>();
-            q.Enqueue(root);//You don't need to write the root here, it will be written in the loop
+            q.Enqueue(root); 
             while (q.Count > 0)
             {
                 string s = "";
@@ -79,15 +73,10 @@ namespace ByzantineAgreement
             }
         }
 
-
-
-
-
         private void BottomUpEvaluation(TreeNode node)
         {
             if (!node.Children.Any())
             {
-                _output += " " + node.Index + " " + node.Value + " ";
                 node.Evaluation = node.Value;
                 return;
             }
@@ -126,6 +115,58 @@ namespace ByzantineAgreement
             return 0;
         }
 
+        // todo 
+        // create one message to be sent to one node
+        public Message FaultyMessageParser(string value, int index, int roundNumber)
+        {
+            // each character in string has to manufacture own path
+            List<MessageNode> m = new List<MessageNode>();
+
+            int count = 1;
+
+            if (roundNumber == 1)
+            {
+                List<int> path = new List<int>();
+                m.Add(new MessageNode(path, int.Parse(value)));
+            }
+            else if (roundNumber == 2)
+            {
+                foreach (char c in value)
+                {
+                    List<int> path = new List<int>();
+
+                    if (count == index)
+                    {
+                        count += 1;
+                    }
+
+                    //     path.Add(sender);
+                    path.Add(count);
+                    m.Add(new MessageNode(path, c - '0'));
+
+                    count++;
+                }
+            }
+            else if (roundNumber == 3)
+            {
+                foreach (char c in value)
+                {
+                    List<int> path = new List<int>();
+
+                    if (count == index)
+                    {
+                        count += 1;
+                    }
+
+                    //     path.Add(sender);
+                    path.Add(count);
+                    m.Add(new MessageNode(path, c - '0'));
+
+                    count++;
+                }
+            }
+
+            return new Message(index, m);
+        }
     }
 }
-

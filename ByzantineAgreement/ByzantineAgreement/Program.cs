@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -19,24 +20,27 @@ namespace ByzantineAgreement
 
         private static void Main(string[] args)
         {
-            string[] temp = Console.ReadLine()?.Split(' ');
-            N = Convert.ToInt32(temp?[0]);
-            DefaultValue = Convert.ToInt32(temp?[1]);
-            Byz = new ActionBlock<Message>[N];
+            List<ByzNode> nodes;
 
-            List<ByzNode> nodes = new List<ByzNode>();
-
-
-            for (var i = 0; i < N; i++)
+            using (StreamReader reader = new StreamReader(args[0]))
             {
-                var node = NodeFromInput(Console.ReadLine());
-                //Console.WriteLine(node);
-                nodes.Add(node);
-                // todo: i / node.index??
-                Byz[node.Index - 1] = new ActionBlock<Message>((Action<Message>)node.ByzBody);
+                string[] temp = reader.ReadLine()?.Split(' ');
+                N = Convert.ToInt32(temp?[0]);
+                DefaultValue = Convert.ToInt32(temp?[1]);
+                Byz = new ActionBlock<Message>[N];
+
+                nodes = new List<ByzNode>();
+                
+                for (var i = 0; i < N; i++)
+                {
+                    var node = NodeFromInput(reader.ReadLine());
+                    //Console.WriteLine(node);
+                    nodes.Add(node);
+                    // todo: i / node.index??
+                    Byz[node.Index - 1] = new ActionBlock<Message>((Action<Message>) node.ByzBody);
+                }
+
             }
-
-
             /* SETTING UP THE CRAZY TDF STUFF */
 
             MaxRounds = (N - 1) / 3 + 1;
@@ -53,7 +57,6 @@ namespace ByzantineAgreement
             }
 
            // Console.WriteLine("Finished rounds");
-
 
             for (int i = 0 ; i < N; i++)
             {

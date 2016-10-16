@@ -33,7 +33,7 @@ namespace ByzantineAgreement
                 RoundNumber++;
                 MessagesReceived = 0;
 
-            //    Console.WriteLine("Node " + Index + " is starting round " + RoundNumber);
+                //    Console.WriteLine("Node " + Index + " is starting round " + RoundNumber);
 
                 string output = RoundNumber + " " + Index + " > ";
 
@@ -41,8 +41,8 @@ namespace ByzantineAgreement
                 {
                     if (Faulty)
                     {
-                        Message message = FaultyMessageParser(FaultyMessages[RoundNumber - 1][i], Index, RoundNumber);
-                        
+                        Message message = new Helper().FaultyMessageParser(FaultyMessages[RoundNumber - 1][i], Index, RoundNumber);
+
                         foreach (MessageNode m in message.Data)
                         {
                             output += m.Value;
@@ -55,7 +55,7 @@ namespace ByzantineAgreement
                     else
                     {
 
-                        List<MessageNode> messageNodes = new TreeTraverser().GenerateMessages(Root);
+                        List<MessageNode> messageNodes = new Helper().GenerateMessages(Root);
                         messageNodes.RemoveAll(x => x.Path.Any() && x.Path.First() == Index);
                         Message message = new Message(Index, messageNodes);
 
@@ -76,7 +76,7 @@ namespace ByzantineAgreement
                 // Console.WriteLine(msg + " to " + Index);
                 MessagesReceived += 1;
 
-                
+
                 foreach (MessageNode n in msg.Data)
                 {
                     TreeNode p = Root;
@@ -96,19 +96,26 @@ namespace ByzantineAgreement
                     }
 
                     int node = n.Path.ElementAt(count);
-                    while (p.Children.Count > 0 && count < n.Path.Count())
+                    while (p.Children.Count > 0 && count < n.Path.Count() - 1)
                     {
-                        c = p.Children.Find(x => x.Index.Equals(node));
+                        c = p.Children.First(x => x.Index == node);
+
+
                         p = c;
-                        node = n.Path.ElementAt(count);
                         count++;
+
+                        node = n.Path.ElementAt(count);
                     }
+
+
+                    c = p.Children.First(x => x.Index == node);
+                    p = c; 
 
 
                     p.Children.Add(new TreeNode(n.Value, msg.Sender));
                     p.Children.Sort();
                 }
-                
+
             }
 
             if (MessagesReceived == Program.N && Interlocked.Decrement(ref Program.CompletionCount) == 0)
@@ -122,57 +129,14 @@ namespace ByzantineAgreement
         public string GetResult()
         {
             string s = ((RoundNumber + 1) + " " + Index + " : ");
-            
 
-            List<string> output = new TreeTraverser().GenerateOutput(Root);
+
+            List<string> output = new Helper().GenerateOutput(Root);
             for (int index = output.Count - 1; index >= 0; index--)
             {
                 s += output[index] + " ";
             }
             return s;
-        }
-
-        public static int tid()
-        {
-            return Thread.CurrentThread.ManagedThreadId;
-        }
-
-        // todo : move to tree traverser
-
-        // create one message to be sent to one node
-        public Message FaultyMessageParser(string value, int index, int roundNumber)
-        {
-            // each character in string has to manufacture own path
-            List<MessageNode> m = new List<MessageNode>();
-
-            int count = 1;
-
-            if (roundNumber == 1)
-            {
-                List<int> path = new List<int>();
-                m.Add(new MessageNode(path, int.Parse(value)));
-            }
-            else if (roundNumber == 2)
-            {
-                foreach (char c in value)
-                {
-                    List<int> path = new List<int>();
-
-                    if (count == index)
-                    {
-                        count += 1;
-                    }
-
-                    //     path.Add(sender);
-                    path.Add(count);
-                    m.Add(new MessageNode(path, c - '0'));
-
-                    count++;
-
-                }
-            }
-
-            return new Message(index, m);
         }
 
 

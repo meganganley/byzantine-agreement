@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <StartArguments>in.txt</StartArguments>
+    <StartWorkingDirectory>C:\Users\Megan\Documents\My Documents\2016 S2\CS 711\Assignments\A2\</StartWorkingDirectory>
+  </PropertyGroup>
+</Project>
