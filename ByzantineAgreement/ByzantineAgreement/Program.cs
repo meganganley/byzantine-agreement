@@ -10,7 +10,9 @@ namespace ByzantineAgreement
     internal static class Program
     {
         public static int N;
-        private static int _defaultValue;
+        public static int DefaultValue;
+        public static int MaxRounds;
+
         public static ActionBlock<Message>[] Byz;
         public static int CompletionCount;
         public static TaskCompletionSource<bool> Completion;
@@ -19,14 +21,17 @@ namespace ByzantineAgreement
         {
             string[] temp = Console.ReadLine()?.Split(' ');
             N = Convert.ToInt32(temp?[0]);
-            _defaultValue = Convert.ToInt32(temp?[1]);
+            DefaultValue = Convert.ToInt32(temp?[1]);
             Byz = new ActionBlock<Message>[N];
+
+            List<ByzNode> nodes = new List<ByzNode>();
+
 
             for (var i = 0; i < N; i++)
             {
                 var node = NodeFromInput(Console.ReadLine());
                 //Console.WriteLine(node);
-
+                nodes.Add(node);
                 // todo: i / node.index??
                 Byz[node.Index - 1] = new ActionBlock<Message>((Action<Message>)node.ByzBody);
             }
@@ -34,9 +39,9 @@ namespace ByzantineAgreement
 
             /* SETTING UP THE CRAZY TDF STUFF */
 
-            var maxRounds = (N - 1) / 3 + 1;
+            MaxRounds = (N - 1) / 3 + 1;
 
-            for (var i = 0; i < maxRounds; i++)
+            for (var i = 1; i <= MaxRounds; i++)
             {
                 CompletionCount = N;
                 Completion = new TaskCompletionSource<bool>();
@@ -47,7 +52,14 @@ namespace ByzantineAgreement
                 Completion.Task.Wait();
             }
 
-            Console.WriteLine("Finished rounds");
+           // Console.WriteLine("Finished rounds");
+
+
+            for (int i = 0 ; i < N; i++)
+            {
+                Console.WriteLine(nodes[i].GetResult());
+            }
+
             Console.ReadLine();
         }
 

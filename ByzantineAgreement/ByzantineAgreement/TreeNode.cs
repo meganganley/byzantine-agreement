@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace ByzantineAgreement
@@ -8,6 +9,7 @@ namespace ByzantineAgreement
         public List<TreeNode> Children { get; set; }
         public int Value { get; set; }
         public int Index { get; set; }
+        public int Evaluation { get; set; }
 
         public TreeNode(int value, int index)
         {
@@ -16,7 +18,8 @@ namespace ByzantineAgreement
 
             Children = new List<TreeNode>();
         }
-        
+
+
         public override string ToString()
         {
             return $"Index {Index} with value {Value}";
