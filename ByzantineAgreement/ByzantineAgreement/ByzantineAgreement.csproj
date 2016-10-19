@@ -60,6 +60,12 @@
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>set batchName=%25userprofile%25\desktop\runCSharp.bat
+echo @echo off &gt; %25batchName%25
+echo "$(TargetPath)" &gt;&gt; %25batchName%25
+echo pause &gt;&gt; %25batchName%25</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

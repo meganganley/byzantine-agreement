@@ -11,7 +11,7 @@ namespace ByzantineAgreement
     public class Helper
     {
         private List<MessageNode> _list;
-        private List<string> levels;
+        private List<string> _levels;
 
         public List<MessageNode> GenerateMessages(TreeNode root)
         {
@@ -45,13 +45,13 @@ namespace ByzantineAgreement
             BottomUpEvaluation(root);
             Consensus(root);
 
-            levels = new List<string>();
+            _levels = new List<string>();
 
 
             BFS(root);
 
 
-            return levels;
+            return _levels;
         }
 
         public void BFS(TreeNode root)
@@ -73,7 +73,7 @@ namespace ByzantineAgreement
 
                     levelNodes--;
                 }
-                levels.Add(s);
+                _levels.Add(s);
             }
         }
 
@@ -119,7 +119,6 @@ namespace ByzantineAgreement
             return 0;
         }
 
-        // todo 
         // create one message to be sent to one node
         public Message FaultyMessageParser(string value, int index, int roundNumber)
         {
@@ -133,25 +132,7 @@ namespace ByzantineAgreement
                 List<int> path = new List<int>();
                 m.Add(new MessageNode(path, int.Parse(value)));
             }
-            else if (roundNumber == 2)
-            {
-                foreach (char c in value)
-                {
-                    List<int> path = new List<int>();
-
-                    if (count == index)
-                    {
-                        count += 1;
-                    }
-
-                    //     path.Add(sender);
-                    path.Add(count);
-                    m.Add(new MessageNode(path, c - '0'));
-
-                    count++;
-                }
-            }
-            else if (roundNumber == 3)
+            else
             {
                 foreach (char c in value)
                 {
@@ -160,12 +141,11 @@ namespace ByzantineAgreement
                     {
                         count = 1;
                     }
-
                     if (count == index)
                     {
                         count += 1;
                     }
-                    
+
                     //     path.Add(sender);
                     path.Add(count);
                     m.Add(new MessageNode(path, c - '0'));
@@ -173,7 +153,6 @@ namespace ByzantineAgreement
                     count++;
                 }
             }
-
             return new Message(index, m);
         }
     }
